@@ -2,44 +2,37 @@ package frl.driesprong.outlierdetection
 
 import breeze.linalg.{DenseVector, sum}
 import frl.driesprong.outlierdectection.StochasticOutlierDetection
-import org.apache.spark.{SparkConf, SparkContext}
 import org.scalactic.TolerantNumerics
 import org.scalatest._
 
 // Unit-tests created based on the Python script of https://github.com/jeroenjanssens/sos
 class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAndAfter {
-  val master = "local"
-  val conf = new SparkConf().setAppName(this.getClass().getSimpleName()).setMaster(master)
-  val sc = new SparkContext(conf)
-
-  val perplexity = 3
-
+  val perplexity = 3.0
   val epsilon = 1e-9f
   implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(epsilon)
 
   "Computing the distance matrix " should "give symmetrical distances" in {
 
-    val data = sc.parallelize(
-      Seq(
+    val data = Array(
         Array(1.0, 3.0),
         Array(5.0, 1.0)
-      ))
+      )
 
-    val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data).map(_._2).sortBy(dist => sum(dist)).collect()
+    val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data).map(_._2).sortBy(dist => sum(dist))
 
     dMatrix(0) should be(dMatrix(1))
   }
 
   "Computing the distance matrix " should "give the correct distances" in {
 
-    val data = sc.parallelize(
-      Seq(
+    val data = 
+      Array(
         Array(1.0, 1.0),
         Array(2.0, 2.0),
         Array(5.0, 1.0)
-      ))
+      )
 
-    val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data).map(_._2).sortBy(dist => sum(dist)).collect()
+    val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data).map(_._2).sortBy(dist => sum(dist))
 
     dMatrix(0) should be(Array(Math.sqrt(2.0), Math.sqrt(10.0)))
     dMatrix(1) should be(Array(Math.sqrt(2.0), Math.sqrt(16.0)))
@@ -73,20 +66,20 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
   "Computing the affinity matrix " should "give the correct affinity" in {
 
     // The datapoints
-    val data = sc.parallelize(
-      Seq(
+    val data = 
+      Array(
         Array(1.0, 1.0),
         Array(2.0, 1.0),
         Array(1.0, 2.0),
         Array(2.0, 2.0),
         Array(5.0, 8.0) // The outlier!
-      ))
+      )
 
     val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data)
     val aMatrix = StochasticOutlierDetection.computeAffinityMatrix( dMatrix,
                                                                     perplexity,
                                                                     StochasticOutlierDetection.DefaultIterations,
-                                                                    StochasticOutlierDetection.DefaultTolerance).map(_._2).sortBy(dist => sum(dist)).collect()
+                                                                    StochasticOutlierDetection.DefaultTolerance).map(_._2).sortBy(dist => sum(dist))
 
     assert(aMatrix.length == 5)
     assert(aMatrix(0)(0) === 1.65024581e-06)
@@ -118,14 +111,14 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
   "Verify the binding probabilities " should "give the correct probabilities" in {
 
     // The distance matrix
-    val dMatrix = sc.parallelize(
-      Seq(
+    val dMatrix = 
+      Array(
         (0L, new DenseVector(Array(6.61626106e-112, 1.27343495e-088))),
         (1L, new DenseVector(Array(2.21858114e-020, 1.12846575e-044))),
         (2L, new DenseVector(Array(1.48949023e-010, 1.60381089e-028)))
-      ))
+      )
 
-    val bMatrix = StochasticOutlierDetection.computeBindingProbabilities(dMatrix).map(_._2).sortBy(dist => sum(dist)).collect()
+    val bMatrix = StochasticOutlierDetection.computeBindingProbabilities(dMatrix).map(_._2).sortBy(dist => sum(dist))
 
     assert(bMatrix(0)(0) === 5.19560192e-24)
     assert(bMatrix(0)(1) === 1.00000000e+00)
@@ -139,14 +132,14 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
 
   "Verifying the product " should "should provide valid products" in {
 
-    val data = sc.parallelize(
-      Seq(
+    val data = 
+      Array(
         (0L, Array(0.5, 0.3)),
         (1L, Array(0.25, 0.1)),
         (2L, Array(0.8, 0.8))
-      ))
+      )
 
-    val oMatrix = StochasticOutlierDetection.computeOutlierProbability(data).map(_._2).sortBy(dist => dist).collect()
+    val oMatrix = StochasticOutlierDetection.computeOutlierProbability(data).map(_._2).sortBy(dist => dist)
 
     val out0 = (1.0 - 0.5) * (1.0 - 0.0) * (1.0 - 0.8)
     val out1 = (1.0 - 0.0) * (1.0 - 0.25) * (1.0 - 0.8)
@@ -162,14 +155,14 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
   "Verifying the output of the SOS algorithm " should "assign the one true outlier" in {
 
     // The distance matrix
-    val data = sc.parallelize(
-      Seq(
+    val data = 
+      Array(
         Array(1.0, 1.0),
         Array(2.0, 1.0),
         Array(1.0, 2.0),
         Array(2.0, 2.0),
         Array(5.0, 8.0) // The outlier!
-      ))
+      )
 
     // Process the steps of the algorithm
     val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data)
@@ -184,7 +177,7 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
     val oMatrix = StochasticOutlierDetection.computeOutlierProbability(bMatrix)
 
     // Do a distributed sort, and then return to driver
-    val output = oMatrix.map(_._2).sortBy(rank => rank).collect()
+    val output = oMatrix.map(_._2).sortBy(rank => rank)
 
     assert(output.length == 5)
     assert(output(0) === 0.12707053787018440794)

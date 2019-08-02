@@ -2,8 +2,6 @@ package frl.driesprong.outlierdectection
 
 import breeze.linalg.{DenseVector, sum}
 import breeze.numerics.{pow, sqrt}
-import org.apache.spark.rdd.RDD
-
 import scala.language.implicitConversions
 
 object StochasticOutlierDetection {
@@ -11,17 +9,16 @@ object StochasticOutlierDetection {
   val DefaultIterations = 500
   val DefaultPerplexity = 30.0
 
-  def performOutlierDetection(inputVectors: RDD[(Long, Array[Double])],
+  def performOutlierDetection(inputVectors: Array[Array[Double]],
                               perplexity: Double = DefaultPerplexity,
-                              tolerance: Double = DefaultPerplexity,
-                              maxIterations: Int = DefaultIterations ): Array[(Long, Double)] = {
+                              tolerance: Double = DefaultTolerance,
+                              maxIterations: Int = DefaultIterations): Array[(Long, Double)] = {
 
-    val dMatrix = StochasticOutlierDetection.computeDistanceMatrixPair(inputVectors)
+    val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(inputVectors)
     val aMatrix = StochasticOutlierDetection.computeAffinityMatrix(dMatrix, perplexity, maxIterations, tolerance)
     val bMatrix = StochasticOutlierDetection.computeBindingProbabilities(aMatrix)
     val oMatrix = StochasticOutlierDetection.computeOutlierProbability(bMatrix)
-
-    oMatrix.collect()
+    oMatrix
   }
 
   def binarySearch(affinity: DenseVector[Double],
@@ -56,38 +53,45 @@ object StochasticOutlierDetection {
       newAffinity
   }
 
-  def computeAffinityMatrix(dMatrix: RDD[(Long, Array[Double])],
+  def computeAffinityMatrix(dMatrix: Array[(Long, Array[Double])],
                             perplexity: Double = DefaultPerplexity,
                             maxIterations: Int,
-                            tolerance: Double): RDD[(Long, DenseVector[Double])] = {
+                            tolerance: Double): Array[(Long, DenseVector[Double])] = {
     val logPerplexity = Math.log(perplexity)
     dMatrix.map(r => (r._1, binarySearch(new DenseVector(r._2), logPerplexity, maxIterations, tolerance)))
   }
 
   def euclDistance(a: Array[Double], b: Array[Double]): Double = sqrt((a zip b).map { case (x, y) => pow(y - x, 2) }.sum)
 
-  def computeBindingProbabilities(rows: RDD[(Long, DenseVector[Double])]): RDD[(Long, Array[Double])] =
+  def computeBindingProbabilities(rows: Array[(Long, DenseVector[Double])]): Array[(Long, Array[Double])] =
     rows.map(r => (r._1, (r._2 :/ sum(r._2)).toArray))
 
-  def computeDistanceMatrix(data: RDD[Array[Double]]): RDD[(Long, Array[Double])] = computeDistanceMatrixPair(data.zipWithUniqueId().map(_.swap))
+  def computeDistanceMatrix(data: Array[Array[Double]]): Array[(Long, Array[Double])] = computeDistanceMatrixPair(data.zipWithIndex.map(tuple => (tuple._2.toLong, tuple._1)))
 
-  def computeDistanceMatrixPair(data: RDD[(Long, Array[Double])]): RDD[(Long, Array[Double])] =
-    data.cartesian(data).flatMap {
-      case (a: (Long, Array[Double]), b: (Long, Array[Double])) =>
-        if (a._1 != b._1)
-          Some(a._1, euclDistance(a._2, b._2))
-        else
-          None
-    }.combineByKey(
-        (v1) => List(v1),
-        (c1: List[Double], v1: Double) => c1 :+ v1,
-        (c1: List[Double], c2: List[Double]) => c1 ++ c2
-      ).map {
-      case (a, b) => (a, b.toArray)
-    }
+  def computeDistanceMatrixPair(data: Array[(Long, Array[Double])]): Array[(Long, Array[Double])] = {
+    data.flatMap(x => data.map(y => (x, y))).
+      flatMap {
+        case (a: (Long, Array[Double]), b: (Long, Array[Double])) =>
+          if (a._1 != b._1)
+            Some(a._1, euclDistance(a._2, b._2))
+          else
+            None
+      }.
+      groupBy(_._1).
+      mapValues(arrayLongDouble => {
+        arrayLongDouble.foldLeft(Array[Double]())((a, b) =>
+          a :+ b._2
+        )
+      }).
+      toArray
+  }
 
-  def computeOutlierProbability(rows: RDD[(Long, Array[Double])]):
-  RDD[(Long, Double)] =
+  def computeOutlierProbability(rows: Array[(Long, Array[Double])]):
+  Array[(Long, Double)] =
     rows.flatMap(r => r._2.zipWithIndex.map(p =>
-      (p._2 + (if (p._2 >= r._1) 1L else 0L), p._1))).foldByKey(1.0)((a, b) => a * (1.0 - b))
+      (p._2 + (if (p._2 >= r._1) 1L else 0L), p._1))).
+      groupBy(_._1).
+      mapValues(arrayLongDouble => {
+        arrayLongDouble.foldLeft(1.0)((a, b) => a * (1.0 - b._2))
+      }).toArray
 }
