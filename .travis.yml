@@ -1,5 +1,5 @@
 language: scala
-jdk: oraclejdk8
+jdk: openjdk10
 scala:
     - 2.11.8
 notifications:
@@ -7,6 +7,6 @@ notifications:
     recipients:
       - guenter.hesse@hpi.de
 script:
-  - sbt clean coverage test
+  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
 after_success:
   - sbt coveralls
