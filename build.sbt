@@ -15,7 +15,7 @@ publishMavenStyle := true
 publishArtifact in Test := false
 pomIncludeRepository := { _ => false }
 
-scalaVersion := "2.11.8"
+scalaVersion := "2.11.11"
 
 libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2"
 libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % "test"
