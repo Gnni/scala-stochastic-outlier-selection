@@ -32,7 +32,7 @@ object StochasticOutlierDetection {
 
     val newAffinity = affinity.map(d => Math.exp(-d * beta))
     val sumA = sum(newAffinity)
-    val hCurr = Math.log(sumA) + beta * sum(affinity :* newAffinity) / sumA
+    val hCurr = Math.log(sumA) + beta * sum(affinity *:* newAffinity) / sumA
     val hDiff = hCurr - logPerplexity
 
     if (iteration < maxIterations && Math.abs(hDiff) > tolerance) {
@@ -64,7 +64,7 @@ object StochasticOutlierDetection {
   def euclDistance(a: Array[Double], b: Array[Double]): Double = sqrt((a zip b).map { case (x, y) => pow(y - x, 2) }.sum)
 
   def computeBindingProbabilities(rows: Array[(Long, DenseVector[Double])]): Array[(Long, Array[Double])] =
-    rows.map(r => (r._1, (r._2 :/ sum(r._2)).toArray))
+    rows.map(r => (r._1, (r._2 /:/ sum(r._2)).toArray))
 
   def computeDistanceMatrix(data: Array[Array[Double]]): Array[(Long, Array[Double])] = computeDistanceMatrixPair(data.zipWithIndex.map(tuple => (tuple._2.toLong, tuple._1)))
 
