@@ -1,6 +1,7 @@
 Stochastic Outlier Selection on Apache Spark
 ============================
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/1edb4375f12d4509a2d5c529c6cf70ce)](https://app.codacy.com/app/Gnni/scala-stochastic-outlier-selection?utm_source=github.com&utm_medium=referral&utm_content=Gnni/scala-stochastic-outlier-selection&utm_campaign=Badge_Grade_Dashboard)
 [![Codacy Badge](https://www.codacy.com/project/badge/9069624e46ac4d97bb19a34705f95965)](https://www.codacy.com)
 [![Build Status](https://travis-ci.org/Fokko/spark-stochastic-outlier-selection.svg?branch=master)](https://travis-ci.org/Fokko/spark-stochastic-outlier-selection)
 [![Coverage Status](https://coveralls.io/repos/Fokko/spark-stochastic-outlier-selection/badge.svg?branch=master&service=github)](https://coveralls.io/github/Fokko/spark-stochastic-outlier-selection?branch=master)
