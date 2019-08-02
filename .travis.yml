@@ -3,11 +3,11 @@ jdk:
   - openjdk8
 scala:
     - 2.11.11
+script:
+  - sbt ++$TRAVIS_SCALA_VERSION clean test coverageAggregate coverage
+after_success:
+  - sbt coveralls
 notifications:
   email:
     recipients:
       - guenter.hesse@hpi.de
-script:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
-after_success:
-  - sbt coveralls
