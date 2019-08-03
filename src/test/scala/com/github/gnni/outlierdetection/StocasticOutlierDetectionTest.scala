@@ -1,7 +1,7 @@
-package frl.driesprong.outlierdetection
+package com.github.gnni.outlierdetection
 
 import breeze.linalg.{DenseVector, sum}
-import frl.driesprong.outlierdectection.StochasticOutlierDetection
+import com.github.gnni.outlierdectection.StochasticOutlierDetection
 import org.scalactic.TolerantNumerics
 import org.scalatest._
 
