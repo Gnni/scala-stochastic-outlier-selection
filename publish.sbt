@@ -32,3 +32,4 @@ ThisBuild / publishTo := {
 }
 ThisBuild / publishMavenStyle := true
 ThisBuild / publishArtifact in Test := false
+ThisBuild / useGpg := true

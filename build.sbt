@@ -14,7 +14,6 @@ lazy val core = (project in file("."))
   .settings(organization := "com.github.gnni")
 
 pomIncludeRepository := { _ => false }
-useGpg := true
 
 scalaVersion := "2.11.11"
 
