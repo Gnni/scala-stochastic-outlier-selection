@@ -4,7 +4,7 @@ Stochastic Outlier Selection in Scala
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/df5fc23eb5b74795b62d0daa52436a0d)](https://www.codacy.com/app/Gnni/scala-stochastic-outlier-selection?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=Gnni/scala-stochastic-outlier-selection&amp;utm_campaign=Badge_Grade)
 [![Build Status](https://travis-ci.org/Gnni/scala-stochastic-outlier-selection.svg?branch=master)](https://travis-ci.org/Gnni/scala-stochastic-outlier-selection)
 [![Coverage Status](https://coveralls.io/repos/github/Gnni/scala-stochastic-outlier-selection/badge.svg?branch=master)](https://coveralls.io/github/Gnni/scala-stochastic-outlier-selection?branch=master)
-[![Maven Central](https://maven-badges.herokuapp.com/maven-central/frl.driesprong/spark-stochastic-outlier-selection_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/frl.driesprong/spark-stochastic-outlier-selection_2.11)
+[![Maven Central](https://maven-badges.herokuapp.com/maven-central/com.github.gnni/scala-stochastic-outlier-selection_2.11/badge.svg)](https://maven-badges.herokuapp.com/maven-central/com.github.gnni/scala-stochastic-outlier-selection_2.11)
 
 Adapted version of the implementation for Apache Spark. This versions
 aims to perform Stochastic Outlier Selection (SOS) using Scala only,
