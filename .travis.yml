@@ -1,6 +1,6 @@
 language: scala
 jdk: oraclejdk11
-scala: 2.11.11
+scala: 2.12.8
 script: "sbt ++$TRAVIS_SCALA_VERSION clean coverage test"
 after_success: "sbt coverageReport coveralls"
 notifications:
