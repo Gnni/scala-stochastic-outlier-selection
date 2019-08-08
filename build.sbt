@@ -15,7 +15,7 @@ lazy val core = (project in file("."))
 
 pomIncludeRepository := { _ => false }
 
-scalaVersion := "2.11.11"
+scalaVersion := "2.12.8"
 
 libraryDependencies += "org.scalanlp" %% "breeze" % "0.13.2"
-libraryDependencies += "org.scalatest" %% "scalatest" % "2.2.5" % "test"
+libraryDependencies += "org.scalatest" %% "scalatest" % "3.0.4" % Test
