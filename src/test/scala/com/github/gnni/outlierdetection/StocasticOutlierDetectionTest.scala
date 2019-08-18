@@ -1,15 +1,14 @@
 package com.github.gnni.outlierdetection
 
 import breeze.linalg.{DenseVector, sum}
-import com.github.gnni.outlierdectection.StochasticOutlierDetection
-import org.scalactic.TolerantNumerics
+import org.scalactic.{Equality, TolerantNumerics}
 import org.scalatest._
 
 // Unit-tests created based on the Python script of https://github.com/jeroenjanssens/sos
 class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAndAfter {
   val perplexity = 3.0
   val epsilon = 1e-9f
-  implicit val doubleEq = TolerantNumerics.tolerantDoubleEquality(epsilon)
+  implicit val doubleEq: Equality[Double] = TolerantNumerics.tolerantDoubleEquality(epsilon)
 
   "Computing the distance matrix " should "give symmetrical distances" in {
 
@@ -39,30 +38,6 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
     dMatrix(2) should be(Array(Math.sqrt(16.0), Math.sqrt(10.0)))
   }
 
-  "Computing the perplexity of the vector " should "give the correct error" in {
-
-    val vector = new DenseVector(Array(1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 8.0, 9.0, 10.0))
-
-    val output = Array(
-      3.67879441e-01,
-      1.35335283e-01,
-      4.97870684e-02,
-      1.83156389e-02,
-      6.73794700e-03,
-      2.47875218e-03,
-      3.35462628e-04,
-      1.23409804e-04,
-      4.53999298e-05
-    )
-
-    // Standard beta
-    val beta = 1.0
-    val search = StochasticOutlierDetection.binarySearch(vector, Math.log(perplexity), 500, beta).toArray
-
-    assert(search.length == output.length)
-    search.zip(output).foreach(v => assert(v._1 === v._2))
-  }
-
   "Computing the affinity matrix " should "give the correct affinity" in {
 
     // The datapoints
@@ -78,8 +53,8 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
     val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data)
     val aMatrix = StochasticOutlierDetection.computeAffinityMatrix( dMatrix,
                                                                     perplexity,
-                                                                    StochasticOutlierDetection.DefaultIterations,
-                                                                    StochasticOutlierDetection.DefaultTolerance).map(_._2).sortBy(dist => sum(dist))
+                                                                    StochasticOutlierDetection.DefaultIterations)
+      .map(_._2).sortBy(dist => sum(dist))
 
     assert(aMatrix.length == 5)
     assert(aMatrix(0)(0) === 1.65024581e-06)
@@ -169,12 +144,36 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
 
     val aMatrix = StochasticOutlierDetection.computeAffinityMatrix( dMatrix,
                                                                     perplexity,
-                                                                    StochasticOutlierDetection.DefaultIterations,
-                                                                    StochasticOutlierDetection.DefaultTolerance)
+                                                                    StochasticOutlierDetection.DefaultIterations)
 
     val bMatrix = StochasticOutlierDetection.computeBindingProbabilities(aMatrix)
 
     val oMatrix = StochasticOutlierDetection.computeOutlierProbability(bMatrix)
+
+    // Do a distributed sort, and then return to driver
+    val output = oMatrix.map(_._2).sortBy(rank => rank)
+
+    assert(output.length == 5)
+    assert(output(0) === 0.12707053787018440794)
+    assert(output(1) === 0.22136130977995771563)
+    assert(output(2) === 0.25775014551682556840)
+    assert(output(3) === 0.27900944792028958830)
+    assert(output(4) === 0.99227799024537555184) // The outlier!
+  }
+
+  "Verifying the output of the SOS algorithm by calling performOutlierDetection() " should "assign the one true outlier" in {
+
+    // The distance matrix
+    val data =
+      Array(
+        Array(1.0, 1.0),
+        Array(2.0, 1.0),
+        Array(1.0, 2.0),
+        Array(2.0, 2.0),
+        Array(5.0, 8.0) // The outlier!
+      )
+
+    val oMatrix = StochasticOutlierDetection.performOutlierDetection(data, perplexity)
 
     // Do a distributed sort, and then return to driver
     val output = oMatrix.map(_._2).sortBy(rank => rank)

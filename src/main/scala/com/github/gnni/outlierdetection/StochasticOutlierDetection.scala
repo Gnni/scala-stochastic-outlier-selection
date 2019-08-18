@@ -1,21 +1,19 @@
-package com.github.gnni.outlierdectection
+package com.github.gnni.outlierdetection
 
 import breeze.linalg.{DenseVector, sum}
 import breeze.numerics.{pow, sqrt}
 import scala.language.implicitConversions
 
 object StochasticOutlierDetection {
-  val DefaultTolerance = 1e-20
   val DefaultIterations = 500
   val DefaultPerplexity = 30.0
 
   def performOutlierDetection(inputVectors: Array[Array[Double]],
                               perplexity: Double = DefaultPerplexity,
-                              tolerance: Double = DefaultTolerance,
                               maxIterations: Int = DefaultIterations): Array[(Long, Double)] = {
 
     val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(inputVectors)
-    val aMatrix = StochasticOutlierDetection.computeAffinityMatrix(dMatrix, perplexity, maxIterations, tolerance)
+    val aMatrix = StochasticOutlierDetection.computeAffinityMatrix(dMatrix, perplexity, maxIterations)
     val bMatrix = StochasticOutlierDetection.computeBindingProbabilities(aMatrix)
     val oMatrix = StochasticOutlierDetection.computeOutlierProbability(bMatrix)
     oMatrix
@@ -24,7 +22,6 @@ object StochasticOutlierDetection {
   def binarySearch(affinity: DenseVector[Double],
                    logPerplexity: Double,
                    maxIterations: Int,
-                   tolerance: Double,
                    iteration: Int = 0,
                    beta: Double = 1.0,
                    betaMin: Double = Double.NegativeInfinity,
@@ -35,7 +32,7 @@ object StochasticOutlierDetection {
     val hCurr = Math.log(sumA) + beta * sum(affinity *:* newAffinity) / sumA
     val hDiff = hCurr - logPerplexity
 
-    if (iteration < maxIterations && Math.abs(hDiff) > tolerance) {
+    if (iteration < maxIterations) {
       val search = if (hDiff > 0)
         (if (betaMax == Double.PositiveInfinity || betaMax == Double.NegativeInfinity)
           beta * 2.0
@@ -47,7 +44,7 @@ object StochasticOutlierDetection {
         else
           (beta + betaMin) / 2.0, betaMin, beta)
 
-      binarySearch(affinity, logPerplexity, maxIterations, tolerance, iteration + 1, search._1, search._2, search._3)
+      binarySearch(affinity, logPerplexity, maxIterations, iteration + 1, search._1, search._2, search._3)
     }
     else
       newAffinity
@@ -55,10 +52,9 @@ object StochasticOutlierDetection {
 
   def computeAffinityMatrix(dMatrix: Array[(Long, Array[Double])],
                             perplexity: Double = DefaultPerplexity,
-                            maxIterations: Int,
-                            tolerance: Double): Array[(Long, DenseVector[Double])] = {
+                            maxIterations: Int): Array[(Long, DenseVector[Double])] = {
     val logPerplexity = Math.log(perplexity)
-    dMatrix.map(r => (r._1, binarySearch(new DenseVector(r._2), logPerplexity, maxIterations, tolerance)))
+    dMatrix.map(r => (r._1, binarySearch(new DenseVector(r._2), logPerplexity, maxIterations)))
   }
 
   def euclDistance(a: Array[Double], b: Array[Double]): Double = sqrt((a zip b).map { case (x, y) => pow(y - x, 2) }.sum)
