@@ -1,6 +1,6 @@
 
 name := "Scala Stochastic Outlier Selection"
-version := "0.1.0"
+version := "0.2.0"
 
 publishTo := {
   val nexus = "https://oss.sonatype.org/"
