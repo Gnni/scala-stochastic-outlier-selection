@@ -53,8 +53,7 @@ class StocasticOutlierDetectionTest extends FlatSpec with Matchers with BeforeAn
     val dMatrix = StochasticOutlierDetection.computeDistanceMatrix(data)
     val aMatrix = StochasticOutlierDetection.computeAffinityMatrix( dMatrix,
                                                                     perplexity,
-                                                                    StochasticOutlierDetection.DefaultIterations)
-      .map(_._2).sortBy(dist => sum(dist))
+                                                                    StochasticOutlierDetection.DefaultIterations).map(_._2).sortBy(dist => sum(dist))
 
     assert(aMatrix.length == 5)
     assert(aMatrix(0)(0) === 1.65024581e-06)
